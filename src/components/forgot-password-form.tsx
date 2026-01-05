@@ -19,10 +19,10 @@ export function ForgotPasswordForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-  const [email, setEmail] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [ email, setEmail ] = useState("");
+  const [ error, setError ] = useState<string | null>(null);
+  const [ success, setSuccess ] = useState(false);
+  const [ isLoading, setIsLoading ] = useState(false);
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
