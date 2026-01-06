@@ -20,11 +20,32 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-  const [ email, setEmail ] = useState("");
-  const [ password, setPassword ] = useState("");
-  const [ error, setError ] = useState<string | null>(null);
-  const [ isLoading, setIsLoading ] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  const handleGoogleSignIn = async () => {
+    const supabase = createClient();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/api/auth/callback`,
+        },
+      });
+      if (error) throw error;
+      // Supabase will redirect on success; no need to push manually
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "An error occurred");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,6 +112,21 @@ export function LoginForm({
               {error && <p className="text-sm text-red-500">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Logging in..." : "Login"}
+              </Button>
+              <div className="relative my-2 text-center text-xs text-muted-foreground">
+                <span className="bg-background px-2 relative z-10">or</span>
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t" />
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={handleGoogleSignIn}
+                disabled={isLoading}
+              >
+                Continue with Google
               </Button>
             </div>
             <div className="mt-4 text-center text-sm">

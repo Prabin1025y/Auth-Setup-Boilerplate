@@ -27,6 +27,27 @@ export function SignUpForm({
   const [ isLoading, setIsLoading ] = useState(false);
   const router = useRouter();
 
+  const handleGoogleSignIn = async () => {
+    const supabase = createClient();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/protected`,
+        },
+      });
+      if (error) throw error;
+      // Supabase will redirect on success; no need to push manually
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "An error occurred");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     const supabase = createClient();
@@ -44,7 +65,7 @@ export function SignUpForm({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/protected`,
+          emailRedirectTo: `${window.location.origin}/api/auth/callback`,
         },
       });
       if (error) throw error;
@@ -104,6 +125,21 @@ export function SignUpForm({
               {error && <p className="text-sm text-red-500">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Creating an account..." : "Sign up"}
+              </Button>
+              <div className="relative my-2 text-center text-xs text-muted-foreground">
+                <span className="bg-background px-2 relative z-10">or</span>
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t" />
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={handleGoogleSignIn}
+                disabled={isLoading}
+              >
+                Continue with Google
               </Button>
             </div>
             <div className="mt-4 text-center text-sm">

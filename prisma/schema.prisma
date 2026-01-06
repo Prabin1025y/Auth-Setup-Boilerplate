@@ -12,3 +12,18 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model Post {
+  id        String   @id @default(cuid())
+  caption   String
+  imageUrl  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Embedding-related
+  pineconeTextVectorId String?
+  pineconeImageVectorId String?
+  embeddingModel   String?
+  embeddingDim     Int?
+  embeddingUpdatedAt DateTime?
+}

@@ -1,13 +1,54 @@
-import { DeployButton } from "@/components/deploy-button";
 import { EnvVarWarning } from "@/components/env-var-warning";
 import { AuthButton } from "@/components/auth-button";
-import { Hero } from "@/components/hero";
 import { ThemeSwitcher } from "@/components/theme-switcher";
-import { ConnectSupabaseSteps } from "@/components/tutorial/connect-supabase-steps";
-import { SignUpUserSteps } from "@/components/tutorial/sign-up-user-steps";
 import { hasEnvVars } from "@/lib/utils";
 import Link from "next/link";
 import { Suspense } from "react";
+import { headers } from "next/headers";
+
+async function PostsList() {
+  // Access headers to construct the API URL and satisfy Next.js 15 requirement
+  const headersList = await headers();
+  const host = headersList.get('host') || 'localhost:3000';
+  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+  const apiUrl = `${protocol}://${host}/api/posts`;
+  
+  const res = await fetch(apiUrl, {
+    cache: 'no-store', // Ensure fresh data on each request
+  });
+  
+  if (!res.ok) {
+    return <div className="text-red-500">Failed to load posts</div>;
+  }
+  
+  const posts = await res.json() as Array<{ id: string; caption: string; imageUrl: string; createdAt: Date }>;
+
+  return (
+    <div className="grid grid-cols-3 gap-4">
+      {posts.map((post) => (
+        <Link key={post.id} href={`/posts/${post.id}`}>
+          <div className="border p-2 rounded hover:shadow-lg">
+            <img src={post.imageUrl} className="w-full h-48 object-cover rounded" />
+            <p className="mt-2">{post.caption}</p>
+          </div>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+function PostsLoading() {
+  return (
+    <div className="grid grid-cols-3 gap-4">
+      {[...Array(6)].map((_, i) => (
+        <div key={i} className="border p-2 rounded animate-pulse">
+          <div className="w-full h-48 bg-gray-200 rounded" />
+          <div className="mt-2 h-4 bg-gray-200 rounded w-3/4" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function Home() {
   return (
@@ -17,9 +58,6 @@ export default function Home() {
           <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
             <div className="flex gap-5 items-center font-semibold">
               <Link href={"/"}>Next.js Supabase Starter</Link>
-              <div className="flex items-center gap-2">
-                <DeployButton />
-              </div>
             </div>
             {!hasEnvVars ? (
               <EnvVarWarning />
@@ -31,25 +69,15 @@ export default function Home() {
           </div>
         </nav>
         <div className="flex-1 flex flex-col gap-20 max-w-5xl p-5">
-          <Hero />
-          <main className="flex-1 flex flex-col gap-6 px-4">
-            <h2 className="font-medium text-xl mb-4">Next steps</h2>
-            {hasEnvVars ? <SignUpUserSteps /> : <ConnectSupabaseSteps />}
-          </main>
+          <div className="max-w-6xl mx-auto p-4">
+            <h1 className="text-3xl font-bold mb-6">Gallery</h1>
+            <Suspense fallback={<PostsLoading />}>
+              <PostsList />
+            </Suspense>
+          </div>
         </div>
 
         <footer className="w-full flex items-center justify-center border-t mx-auto text-center text-xs gap-8 py-16">
-          <p>
-            Powered by{" "}
-            <a
-              href="https://supabase.com/?utm_source=create-next-app&utm_medium=template&utm_term=nextjs"
-              target="_blank"
-              className="font-bold hover:underline"
-              rel="noreferrer"
-            >
-              Supabase
-            </a>
-          </p>
           <ThemeSwitcher />
         </footer>
       </div>
