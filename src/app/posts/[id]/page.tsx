@@ -54,7 +54,7 @@ async function PostDetail({ params }: Props) {
                             <ImageIcon className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
                             <h2 className="text-2xl font-bold mb-4">Post not found</h2>
                             <p className="text-muted-foreground mb-6">
-                                The post you're looking for doesn't exist or has been removed.
+                                The post you&apos;re looking for doesn&apos;t exist or has been removed.
                             </p>
                             <Button asChild variant="outline">
                                 <Link href="/posts">Back to Gallery</Link>

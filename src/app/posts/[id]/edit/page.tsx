@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, Suspense } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Field, FieldContent, FieldLabel } from "@/components/ui/field";
 
-export default function EditPostPage() {
+function EditPostContent() {
     const router = useRouter();
     const params = useParams();
     const postId = params.id as string;
@@ -297,5 +297,21 @@ export default function EditPostPage() {
                 </CardContent>
             </Card>
         </div>
+    );
+}
+
+export default function EditPostPage() {
+    return (
+        <Suspense fallback={
+            <div className="w-full max-w-2xl mx-auto p-5 py-8">
+                <Card>
+                    <CardContent className="flex items-center justify-center py-12">
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    </CardContent>
+                </Card>
+            </div>
+        }>
+            <EditPostContent />
+        </Suspense>
     );
 }

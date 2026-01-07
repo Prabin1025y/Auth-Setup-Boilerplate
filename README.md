@@ -323,21 +323,9 @@ src/
 1. Fetch embeddings for current post from Pinecone
 2. Query both namespaces for similar vectors (top 20 candidates)
 3. Normalize similarity scores (0-1 range)
-4. Apply late fusion with weights (60% text, 40% image)
+4. Apply late fusion with weights (40% text, 60% image)
 5. Rank by combined score
 6. Return top 6 most similar posts
-
----
-
-## Future Improvements
-
-- [ ] Add user profiles with avatars
-- [ ] Implement likes and comments
-- [ ] Support video posts with temporal embeddings
-- [ ] Add real-time updates with Supabase subscriptions
-- [ ] Implement hashtag extraction and trending
-- [ ] Add advanced filters (date, user, similarity threshold)
-- [ ] Deploy to production (Vercel + cloud storage)
 
 ---
 
