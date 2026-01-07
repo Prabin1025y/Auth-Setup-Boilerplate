@@ -1,23 +1,15 @@
 import { prisma } from "@/lib/prisma";
-import { getImageEmbedding, getTextEmbedding } from "./embeddings";
+import { createImageEmbedding, createTextEmbedding } from "./embeddings";
 import { upsertPostEmbeddings } from "./pinecone";
 
-// CRUD actions
-export async function createPost(caption: string, imageUrl: string) {
-    return prisma.post.create({
-        data: { caption, imageUrl },
-    });
-}
-
 export async function createPostWithEmbeddings(caption: string, imageUrl: string) {
-    // const textEmbedding = await getTextEmbedding(caption);
-    // const imageEmbedding = await getImageEmbedding(imageUrl);
-
-    const [textEmbedding, imageEmbedding] = await Promise.all([
-        getTextEmbedding(caption),
-        getImageEmbedding(imageUrl)
+    //create embeddings of image and text
+    const [ textEmbedding, imageEmbedding ] = await Promise.all([
+        createTextEmbedding(caption),
+        createImageEmbedding(imageUrl)
     ])
 
+    //Create post
     const post = await prisma.post.create({
         data: {
             caption,
@@ -29,14 +21,17 @@ export async function createPostWithEmbeddings(caption: string, imageUrl: string
         }
     })
 
+    //Add embedding records to pinecone
     await upsertPostEmbeddings(post.id, textEmbedding, imageEmbedding.imageEmbedding, imageEmbedding.caption);
 
+    //update pinecone vectors id
     const updatedPost = await prisma.post.update({
         where: { id: post.id },
         data: { pineconeTextVectorId: post.id, pineconeImageVectorId: post.id },
     });
 
     return updatedPost;
+
 }
 
 export async function getPosts() {

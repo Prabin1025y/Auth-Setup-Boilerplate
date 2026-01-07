@@ -1,29 +1,38 @@
 import { prisma } from "@/lib/prisma";
 import { Pinecone, RecordMetadata, ScoredPineconeRecord } from "@pinecone-database/pinecone";
+
+//Pinecone client to interact with pinecone db
 const pinecone = new Pinecone({
   apiKey: process.env.PINECONE_API_KEY!
 });
-
 const index = pinecone.Index(process.env.PINECONE_INDEX_NAME!, process.env.PINECONE_INDEX_HOST!);
 
-export async function upsertPostEmbeddings(postId: string, textEmbedding: number[], imageEmbedding: number[], caption: string) {
-  // Text vector
-  await index.namespace("text-namespace").upsert([
-    {
-      id: postId,
-      values: textEmbedding,
-      metadata: { type: "text" }
-    }
-  ])
 
-  // Image vector
-  await index.namespace("image-namespace").upsert([
-    {
-      id: postId,
-      values: imageEmbedding,
-      metadata: { type: "image", caption: caption }
+export async function upsertPostEmbeddings(postId: string, textEmbedding: number[], imageEmbedding: number[], caption: string) {
+  try {
+    // Text vector
+    await index.namespace("text-namespace").upsert([
+      {
+        id: postId,
+        values: textEmbedding,
+        metadata: { type: "text" }
+      }
+    ])
+
+    // Image vector
+    await index.namespace("image-namespace").upsert([
+      {
+        id: postId,
+        values: imageEmbedding,
+        metadata: { type: "image", caption: caption }
+      }
+    ]);
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Failed upsert post embedding: ${error.message}`);
     }
-  ]);
+    throw new Error('Failed to upsert post embedding: Unknown error occurred');
+  }
 }
 
 export async function getSimilarPosts(postId: string) {
@@ -32,20 +41,22 @@ export async function getSimilarPosts(postId: string) {
   const CANDIDATES = 20;
   const FINAL_K = 6;
 
-  const [textEmbeddingFetchResult, imageEmbeddingFetchResult] = await Promise.all([
-    index.namespace("text-namespace").fetch([postId]),
-    index.namespace("image-namespace").fetch([postId])
+  //Fetch embedding for currently shown post
+  const [ textEmbeddingFetchResult, imageEmbeddingFetchResult ] = await Promise.all([
+    index.namespace("text-namespace").fetch([ postId ]),
+    index.namespace("image-namespace").fetch([ postId ])
   ])
 
-  const currentPostTextEmbedding = textEmbeddingFetchResult?.records[postId]?.values;
-  const currentPostImageEmbedding = imageEmbeddingFetchResult?.records[postId]?.values;
+  const currentPostTextEmbedding = textEmbeddingFetchResult?.records[ postId ]?.values;
+  const currentPostImageEmbedding = imageEmbeddingFetchResult?.records[ postId ]?.values;
 
   if (!currentPostImageEmbedding && !currentPostTextEmbedding)
     return []
 
-  const [textResults, imageResults] = await Promise.all([
+  //Search the vector database with embedding vectors of current post
+  const [ textResults, imageResults ] = await Promise.all([
     currentPostTextEmbedding
-      ? index.query({
+      ? index.namespace("text-namespace").query({
         vector: currentPostTextEmbedding,
         topK: CANDIDATES,
         includeMetadata: true,
@@ -53,7 +64,7 @@ export async function getSimilarPosts(postId: string) {
       : null,
 
     currentPostImageEmbedding
-      ? index.query({
+      ? index.namespace('image-namespace').query({
         vector: currentPostImageEmbedding,
         topK: CANDIDATES,
         includeMetadata: true,
@@ -81,21 +92,21 @@ export async function getSimilarPosts(postId: string) {
   // 4. Late fusion with weights
   const fusedScores: Record<string, number> = {};
 
-  for (const [id, score] of Object.entries(textScores)) {
-    fusedScores[id] = (fusedScores[id] || 0) + TEXT_WEIGHT * score;
+  for (const [ id, score ] of Object.entries(textScores)) {
+    fusedScores[ id ] = (fusedScores[ id ] || 0) + TEXT_WEIGHT * score;
   }
 
-  for (const [id, score] of Object.entries(imageScores)) {
-    fusedScores[id] = (fusedScores[id] || 0) + IMAGE_WEIGHT * score;
+  for (const [ id, score ] of Object.entries(imageScores)) {
+    fusedScores[ id ] = (fusedScores[ id ] || 0) + IMAGE_WEIGHT * score;
   }
 
-  delete fusedScores[postId];
+  delete fusedScores[ postId ];
 
   // 5. Final ranking
   const rankedIds = Object.entries(fusedScores)
-    .sort((a, b) => b[1] - a[1])
+    .sort((a, b) => b[ 1 ] - a[ 1 ])
     .slice(0, FINAL_K)
-    .map(([id]) => id);
+    .map(([ id ]) => id);
 
   if (rankedIds.length === 0) return [];
 

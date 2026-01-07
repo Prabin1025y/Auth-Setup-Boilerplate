@@ -1,8 +1,9 @@
-import { createPost, createPostWithEmbeddings, getPosts } from "@/server/actions/posts";
+import { createPostWithEmbeddings, getPosts } from "@/server/actions/posts";
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 
+//API to get all posts
 export async function GET() {
     try {
         const posts = await getPosts();
@@ -15,6 +16,7 @@ export async function GET() {
     }
 }
 
+//API to create post
 export async function POST(req: NextRequest) {
     try {
         const formData = await req.formData();
@@ -22,8 +24,11 @@ export async function POST(req: NextRequest) {
         const caption = formData.get("caption") as string;
 
         if (!image) {
-            return NextResponse.json({ error: "Image is required" }, { status: 400 });
+            return NextResponse.json({ message: "Image is required" }, { status: 400 });
         }
+
+        if (!caption || typeof caption !== 'string' || caption.trim().length === 0)
+            return NextResponse.json({ message: "Invalid caption!!" }, { status: 400 });
 
         // Save file to public/uploads directory
         const bytes = await image.arrayBuffer();
@@ -43,7 +48,7 @@ export async function POST(req: NextRequest) {
     } catch (error) {
         console.error(error)
         return NextResponse.json(
-            { error: error instanceof Error ? error.message : "Failed to create post" },
+            { message: "Failed to create post!" },
             { status: 500 }
         );
     }
