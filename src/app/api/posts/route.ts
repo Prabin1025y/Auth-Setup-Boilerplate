@@ -4,11 +4,18 @@ import fs from "fs";
 import path from "path";
 
 //API to get all posts
-export async function GET() {
+export async function GET(req: NextRequest) {
     try {
+        const userId = req.headers.get("x-user-id")
+        console.log(userId)
         const posts = await getPosts();
-        return NextResponse.json(posts);
+        const postsModified = posts.map(post => ({
+            ...post,
+            isOwner: userId ? (post.userId === userId ? true : false) : false
+        }))
+        return NextResponse.json(postsModified);
     } catch (error) {
+        console.error(error)
         return NextResponse.json(
             { error: error instanceof Error ? error.message : "Failed to fetch posts" },
             { status: 500 }
@@ -22,6 +29,11 @@ export async function POST(req: NextRequest) {
         const formData = await req.formData();
         const image = formData.get("image") as File;
         const caption = formData.get("caption") as string;
+
+        const userId = req.headers.get("x-user-id");
+
+        if (!userId)
+            return NextResponse.json({ message: "Unauthenticated" }, { status: 401 })
 
         if (!image) {
             return NextResponse.json({ message: "Image is required" }, { status: 400 });
@@ -42,7 +54,7 @@ export async function POST(req: NextRequest) {
         fs.writeFileSync(path.join(uploadDir, filename), buffer);
 
         const imageUrl = `/uploads/${filename}`;
-        const post = await createPostWithEmbeddings(caption, imageUrl);
+        const post = await createPostWithEmbeddings(caption, imageUrl, userId);
 
         return NextResponse.json(post, { status: 201 });
     } catch (error) {

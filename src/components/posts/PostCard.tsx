@@ -10,10 +10,19 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 type Post = {
+    isOwner: boolean;
     id: string;
+    userId: string;
     caption: string;
     imageUrl: string;
-    createdAt: string | Date;
+    createdAt: Date;
+    updatedAt: Date;
+    pineconeTextVectorId: string | null;
+    pineconeImageVectorId: string | null;
+    textEmbeddingModel: string | null;
+    imageCaptioningModel: string | null;
+    embeddingDim: number | null;
+    embeddingUpdatedAt: Date | null;
 };
 
 type PostCardProps = {
@@ -39,7 +48,7 @@ export function PostCard({ post, onEdit, onDelete }: PostCardProps) {
                     />
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent opacity-0 transition group-hover:opacity-100" />
 
-                    <div className="absolute right-2 top-2 z-10">
+                    {post.isOwner && <div className="absolute right-2 top-2 z-10">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <button
@@ -72,7 +81,7 @@ export function PostCard({ post, onEdit, onDelete }: PostCardProps) {
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                    </div>
+                    </div>}
                 </div>
 
                 <div className="flex flex-col gap-1 p-3">

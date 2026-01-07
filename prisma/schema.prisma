@@ -15,16 +15,17 @@ datasource db {
 
 model Post {
   id        String   @id @default(cuid())
+  userId    String
   caption   String
   imageUrl  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Embedding-related
-  pineconeTextVectorId    String?
-  pineconeImageVectorId   String?
-  textEmbeddingModel      String?
-  imageCaptioningModel    String?
-  embeddingDim            Int?
-  embeddingUpdatedAt DateTime?
+  pineconeTextVectorId  String?
+  pineconeImageVectorId String?
+  textEmbeddingModel    String?
+  imageCaptioningModel  String?
+  embeddingDim          Int?
+  embeddingUpdatedAt    DateTime?
 }

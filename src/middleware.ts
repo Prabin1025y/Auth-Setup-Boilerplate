@@ -1,3 +1,4 @@
+import { updateSession } from '@/lib/supabase/proxy'
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse, type NextRequest } from 'next/server'
 
@@ -18,15 +19,29 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Skip if path is not protected
-  if (!isProtectedPath(pathname)) {
-    return NextResponse.next()
-  }
+  // Update session using the proxy pattern
+  let response = await updateSession(request)
 
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser()
+
+  //Add userId to header in case needed
+  const requestHeaders = new Headers(request.headers)
+  if (user) {
+    requestHeaders.set('x-user-id', user.id)
+    response.headers.set('x-user-id', user.id)
+  }
+
+  // Skip if path is not protected
+  if (!isProtectedPath(pathname)) {
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders
+      }
+    })
+  }
 
   // If no user and trying to access a protected route, redirect to login
   if (!user) {
@@ -35,7 +50,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  return NextResponse.next()
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders
+    }
+  })
 }
 
 export const config = {
@@ -49,7 +68,7 @@ export const config = {
      * - favicon.ico (favicon file)
      * - auth (auth routes to avoid redirect loops)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|auth).*)',
+    '/((?!_next/static|_next/image|favicon.ico|auth).*)',
   ],
 }
 

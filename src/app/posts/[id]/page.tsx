@@ -16,10 +16,7 @@ interface Props {
 }
 
 async function SimilarPostsSection({ postId }: { postId: string }) {
-    console.log("start")
     const similarPosts = await getSimilarPosts(postId);
-    console.log("Finished")
-    console.log(similarPosts)
 
     if (similarPosts.length === 0) {
         return null;
@@ -36,12 +33,7 @@ async function SimilarPostsSection({ postId }: { postId: string }) {
                 {similarPosts.map((post) => (
                     <PostCard
                         key={post.id}
-                        post={{
-                            id: post.id,
-                            caption: post.caption,
-                            imageUrl: post.imageUrl,
-                            createdAt: post.createdAt,
-                        }}
+                        post={{ ...post, isOwner: false }}
                     />
                 ))}
             </div>
@@ -133,7 +125,7 @@ async function PostDetail({ params }: Props) {
                             <Separator className="flex-1" />
                         </div>
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                            {[...Array(6)].map((_, i) => (
+                            {[ ...Array(6) ].map((_, i) => (
                                 <div
                                     key={i}
                                     className="border rounded-xl overflow-hidden animate-pulse"

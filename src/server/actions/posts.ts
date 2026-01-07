@@ -1,17 +1,21 @@
+'use server'
+
 import { prisma } from "@/lib/prisma";
 import { createImageEmbedding, createTextEmbedding } from "./embeddings";
 import { upsertPostEmbeddings } from "./pinecone";
 
-export async function createPostWithEmbeddings(caption: string, imageUrl: string) {
+export async function createPostWithEmbeddings(caption: string, imageUrl: string, userId: string) {
     //create embeddings of image and text
     const [ textEmbedding, imageEmbedding ] = await Promise.all([
         createTextEmbedding(caption),
         createImageEmbedding(imageUrl)
     ])
 
+
     //Create post
     const post = await prisma.post.create({
         data: {
+            userId,
             caption,
             imageUrl,
             embeddingDim: 1024,

@@ -1,30 +1,26 @@
 import Link from 'next/link';
-import React from 'react'
 import { PostCard } from './PostCard';
-import { getPosts } from '@/server/actions/posts';
+import { headers } from 'next/headers';
+import { PostType } from '@/types/post';
 
 async function PostsList() {
-    // const headersList = await headers();
-    // const host = headersList.get("host") || "localhost:3000";
-    // const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
-    // const apiUrl = `${protocol}://${host}/api/posts`;
+    const headersList = await headers();
+    const host = headersList.get("host") || "localhost:3000";
+    const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
+    const apiUrl = `${protocol}://${host}/api/posts`;
 
-    // const res = await fetch(apiUrl, {
-    //   cache: "no-store",
-    // });
+    const res = await fetch(apiUrl, {
+        cache: "no-store",
+    });
 
-    // if (!res.ok) {
-    //   return <div className="text-red-500">Failed to load posts</div>;
-    // }
+    if (!res.ok) {
+        return <div className="text-red-500">Failed to load posts</div>;
+    }
 
-    const posts = await getPosts()
+    // const posts = await getPosts()
 
-    // const posts = (await res.json()) as Array<{
-    //   id: string;
-    //   caption: string;
-    //   imageUrl: string;
-    //   createdAt: Date;
-    // }>;
+    const posts: PostType[] = await res.json();
+    // console.log(posts)
 
     return (
         <div className="w-full max-w-7xl mx-auto p-5 py-8">
