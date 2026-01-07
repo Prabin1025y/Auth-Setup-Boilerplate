@@ -21,9 +21,10 @@ model Post {
   updatedAt DateTime @updatedAt
 
   // Embedding-related
-  pineconeTextVectorId String?
-  pineconeImageVectorId String?
-  embeddingModel   String?
-  embeddingDim     Int?
+  pineconeTextVectorId    String?
+  pineconeImageVectorId   String?
+  textEmbeddingModel      String?
+  imageCaptioningModel    String?
+  embeddingDim            Int?
   embeddingUpdatedAt DateTime?
 }
