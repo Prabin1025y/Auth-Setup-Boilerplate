@@ -11,14 +11,14 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "Next.js and Supabase Starter Kit",
-  description: "The fastest way to build apps with Next.js and Supabase",
+  title: "Post Recommendation",
+  description: "Post recommendation system using embeddings",
 };
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   display: "swap",
-  subsets: ["latin"],
+  subsets: [ "latin" ],
 });
 
 export default function RootLayout({

@@ -11,7 +11,6 @@ export async function createPostWithEmbeddings(caption: string, imageUrl: string
         createImageEmbedding(imageUrl)
     ])
 
-
     //Create post
     const post = await prisma.post.create({
         data: {
@@ -51,6 +50,72 @@ export async function updatePost(id: string, caption?: string, imageUrl?: string
         where: { id },
         data: { caption, imageUrl },
     });
+}
+
+export async function updatePostWithEmbeddings(
+    postId: string,
+    caption: string,
+    imageUrl: string
+) {
+    // Get existing post to compare what changed
+    const existingPost = await prisma.post.findUnique({
+        where: { id: postId }
+    });
+
+    if (!existingPost) {
+        throw new Error("Post not found");
+    }
+
+    const captionChanged = caption !== existingPost.caption;
+    const imageChanged = imageUrl !== existingPost.imageUrl;
+
+    // Only create embeddings for what changed
+    let textEmbedding = null;
+    let imageEmbedding = null;
+    let imageCaption = null;
+
+    if (captionChanged && imageChanged) {
+        // Both changed - generate both embeddings
+        const [ textEmb, imageEmb ] = await Promise.all([
+            createTextEmbedding(caption),
+            createImageEmbedding(imageUrl)
+        ]);
+        textEmbedding = textEmb;
+        imageEmbedding = imageEmb.imageEmbedding;
+        imageCaption = imageEmb.caption;
+    } else if (captionChanged) {
+        // Only caption changed
+        textEmbedding = await createTextEmbedding(caption);
+    } else if (imageChanged) {
+        // Only image changed
+        const imageEmb = await createImageEmbedding(imageUrl);
+        imageEmbedding = imageEmb.imageEmbedding;
+        imageCaption = imageEmb.caption;
+    }
+
+    // Update post in database
+    const updatedPost = await prisma.post.update({
+        where: { id: postId },
+        data: {
+            caption,
+            imageUrl,
+            embeddingUpdatedAt: new Date()
+        }
+    });
+
+    // Update embeddings in Pinecone only for what changed
+    if (textEmbedding && imageEmbedding) {
+        // Both changed
+        await upsertPostEmbeddings(postId, textEmbedding, imageEmbedding, imageCaption!);
+    } else if (textEmbedding) {
+        // Only text changed
+        await upsertPostEmbeddings(postId, textEmbedding, null, null);
+    } else if (imageEmbedding) {
+        // Only image changed
+        await upsertPostEmbeddings(postId, null, imageEmbedding, imageCaption!);
+    }
+
+    return updatedPost;
 }
 
 export async function deletePost(id: string) {

@@ -1,5 +1,5 @@
 export interface PostType {
-    isOwner: boolean;
+    // isOwner: boolean;
     id: string;
     userId: string;
     caption: string;

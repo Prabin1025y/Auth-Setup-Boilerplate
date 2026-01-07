@@ -33,7 +33,7 @@ async function SimilarPostsSection({ postId }: { postId: string }) {
                 {similarPosts.map((post) => (
                     <PostCard
                         key={post.id}
-                        post={{ ...post, isOwner: false }}
+                        post={post}
                     />
                 ))}
             </div>

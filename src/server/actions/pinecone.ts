@@ -8,25 +8,45 @@ const pinecone = new Pinecone({
 const index = pinecone.Index(process.env.PINECONE_INDEX_NAME!, process.env.PINECONE_INDEX_HOST!);
 
 
-export async function upsertPostEmbeddings(postId: string, textEmbedding: number[], imageEmbedding: number[], caption: string) {
+export async function upsertPostEmbeddings(
+  postId: string,
+  textEmbedding: number[] | null,
+  imageEmbedding: number[] | null,
+  caption: string | null
+) {
   try {
-    // Text vector
-    await index.namespace("text-namespace").upsert([
-      {
-        id: postId,
-        values: textEmbedding,
-        metadata: { type: "text" }
-      }
-    ])
+    const upsertPromises = [];
 
-    // Image vector
-    await index.namespace("image-namespace").upsert([
-      {
-        id: postId,
-        values: imageEmbedding,
-        metadata: { type: "image", caption: caption }
-      }
-    ]);
+    // Text vector - only upsert if provided
+    if (textEmbedding) {
+      upsertPromises.push(
+        index.namespace("text-namespace").upsert([
+          {
+            id: postId,
+            values: textEmbedding,
+            metadata: { type: "text" }
+          }
+        ])
+      );
+    }
+
+    // Image vector - only upsert if provided
+    if (imageEmbedding && caption) {
+      upsertPromises.push(
+        index.namespace("image-namespace").upsert([
+          {
+            id: postId,
+            values: imageEmbedding,
+            metadata: { type: "image", caption: caption }
+          }
+        ])
+      );
+    }
+
+    // Execute all upserts in parallel
+    if (upsertPromises.length > 0) {
+      await Promise.all(upsertPromises);
+    }
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed upsert post embedding: ${error.message}`);
@@ -36,10 +56,12 @@ export async function upsertPostEmbeddings(postId: string, textEmbedding: number
 }
 
 export async function getSimilarPosts(postId: string) {
-  const TEXT_WEIGHT = 0.6;
-  const IMAGE_WEIGHT = 0.4;
+  const TEXT_WEIGHT = 0.4;
+  const IMAGE_WEIGHT = 0.6;
   const CANDIDATES = 20;
   const FINAL_K = 6;
+
+  console.log("coming")
 
   //Fetch embedding for currently shown post
   const [ textEmbeddingFetchResult, imageEmbeddingFetchResult ] = await Promise.all([
@@ -47,8 +69,11 @@ export async function getSimilarPosts(postId: string) {
     index.namespace("image-namespace").fetch([ postId ])
   ])
 
+
   const currentPostTextEmbedding = textEmbeddingFetchResult?.records[ postId ]?.values;
   const currentPostImageEmbedding = imageEmbeddingFetchResult?.records[ postId ]?.values;
+
+  // console.log(currentPostImageEmbedding)
 
   if (!currentPostImageEmbedding && !currentPostTextEmbedding)
     return []
@@ -115,5 +140,7 @@ export async function getSimilarPosts(postId: string) {
     where: { id: { in: rankedIds } },
   });
 
-  return rankedIds.map(id => posts.find(p => p.id === id)!);
+  console.log(posts)
+
+  return rankedIds.map(id => posts.find(p => p.id === id)).filter((post): post is NonNullable<typeof post> => post !== undefined);;
 }

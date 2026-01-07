@@ -110,10 +110,15 @@ export default function NewPostPage() {
       }
 
       // Success - redirect to posts page
+      setImage(null)
+      setImagePreview(null)
+      setCaption("")
       router.push("/posts");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create post");
+      setIsLoading(false);
+    } finally {
       setIsLoading(false);
     }
   };

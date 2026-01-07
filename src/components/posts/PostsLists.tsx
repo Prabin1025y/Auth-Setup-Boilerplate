@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { PostCard } from './PostCard';
 import { headers } from 'next/headers';
 import { PostType } from '@/types/post';
+import { createClient } from '@/lib/supabase/server';
 
 async function PostsList() {
     const headersList = await headers();
@@ -16,6 +17,12 @@ async function PostsList() {
     if (!res.ok) {
         return <div className="text-red-500">Failed to load posts</div>;
     }
+
+    const supabase = await createClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser()
+    const userId = user?.id
 
     // const posts = await getPosts()
 
@@ -35,7 +42,7 @@ async function PostsList() {
             </div>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {posts.map((post) => (
-                    <PostCard key={post.id} post={post} />
+                    <PostCard key={post.id} post={post} userId={userId} />
                 ))}
             </div>
         </div>

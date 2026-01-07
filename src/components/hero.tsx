@@ -8,12 +8,12 @@ export function Hero() {
         <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
           Welcome to{" "}
           <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Next.js Supabase Starter
+            Smart Post Recommendations
           </span>
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-          The fastest way to build modern web applications with Next.js and Supabase.
-          Create, share, and discover amazing content.
+          Discover personalized post recommendations tailored to your interests.
+          Get smart suggestions and connect with content that matters to you.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-4">
           <Button asChild size="lg" className="text-base">

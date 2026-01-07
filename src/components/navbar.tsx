@@ -33,7 +33,7 @@ export function Navbar() {
       <div className="w-full max-w-7xl flex justify-between items-center p-3 px-5 text-sm">
         <div className="flex gap-8 items-center">
           <Link href="/" className="font-semibold text-lg hover:opacity-80 transition-opacity">
-            Next.js Supabase Starter
+            PostBook
           </Link>
           <NavLinks />
         </div>

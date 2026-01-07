@@ -1,6 +1,8 @@
 'use client'
 import Link from "next/link";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import {
     DropdownMenu,
@@ -8,30 +10,52 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { PostType } from "@/types/post";
 
-type Post = {
-    isOwner: boolean;
-    id: string;
-    userId: string;
-    caption: string;
-    imageUrl: string;
-    createdAt: Date;
-    updatedAt: Date;
-    pineconeTextVectorId: string | null;
-    pineconeImageVectorId: string | null;
-    textEmbeddingModel: string | null;
-    imageCaptioningModel: string | null;
-    embeddingDim: number | null;
-    embeddingUpdatedAt: Date | null;
-};
 
 type PostCardProps = {
-    post: Post;
-    onEdit?: (post: Post) => void;
-    onDelete?: (post: Post) => void;
+    post: PostType;
+    userId?: string | undefined
 };
 
-export function PostCard({ post, onEdit, onDelete }: PostCardProps) {
+export function PostCard({ post, userId }: PostCardProps) {
+    const router = useRouter();
+    const [ isDeleting, setIsDeleting ] = useState(false);
+
+    const handleDelete = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!confirm("Are you sure you want to delete this post?")) {
+            return;
+        }
+
+        try {
+            setIsDeleting(true);
+            const response = await fetch(`/api/posts?id=${post.id}`, {
+                method: "DELETE",
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || "Failed to delete post");
+            }
+
+            router.refresh();
+        } catch (error) {
+            console.error("Failed to delete post:", error);
+            alert(error instanceof Error ? error.message : "Failed to delete post");
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+    const handleEdit = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        router.push(`/posts/${post.id}/edit`);
+    };
+
     const created =
         typeof post.createdAt === "string"
             ? new Date(post.createdAt)
@@ -48,7 +72,7 @@ export function PostCard({ post, onEdit, onDelete }: PostCardProps) {
                     />
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent opacity-0 transition group-hover:opacity-100" />
 
-                    {post.isOwner && <div className="absolute right-2 top-2 z-10">
+                    {(userId && post.userId === userId) && <div className="absolute right-2 top-2 z-10">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <button
@@ -61,23 +85,18 @@ export function PostCard({ post, onEdit, onDelete }: PostCardProps) {
                             <DropdownMenuContent align="end" className="w-32">
                                 <DropdownMenuItem
                                     className="cursor-pointer"
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        onEdit?.(post);
-                                    }}
+                                    onClick={handleEdit}
                                 >
                                     <Pencil className="mr-2 h-4 w-4" />
                                     Edit
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                     className="cursor-pointer text-red-600 focus:text-red-600"
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        onDelete?.(post);
-                                    }}
+                                    onClick={handleDelete}
+                                    disabled={isDeleting}
                                 >
                                     <Trash2 className="mr-2 h-4 w-4" />
-                                    Delete
+                                    {isDeleting ? "Deleting..." : "Delete"}
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
